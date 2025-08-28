@@ -11,6 +11,7 @@ const fs = require('fs');
 const app = express();
 app.use(express.json());
 
+app.get("/", (_req, res) => res.send("Combine API is running."));
 app.post('/combine', async (req, res) => {
   try {
     const { audioUrl, imageUrl } = req.body;

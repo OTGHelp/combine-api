@@ -24,8 +24,8 @@ app.post('/combine', async (req, res) => {
       }
 
       const video = fs.readFileSync(outputPath);
-      res.setHeader('Content-Type', 'video/mp4');
-      res.send(video);
+res.setHeader('Content-Type', 'video/mp4');
+res.download(outputFile, 'combined-video.mp4');
     });
   } catch (err) {
     console.error(err);

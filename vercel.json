@@ -10,8 +10,7 @@
     {
       "src": "/combine",
       "methods": ["POST"],
-      "dest": "/index.js"
+      "dest": "index.js"
     }
   ]
 }
-

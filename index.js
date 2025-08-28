@@ -14,8 +14,12 @@ app.post('/combine', async (req, res) => {
       return res.status(400).json({ error: 'Missing audioUrl or imageUrl' });
     }
 
-    const outputPath = path.join('/tmp', 'output.mp4');
-    const cmd = `"${ffmpegPath}" -loop 1 -i "${imageUrl}" -i "${audioUrl}" -c:v libx264 -tune stillimage -c:a aac -b:a 192k -pix_fmt yuv420p -shortest "${outputPath}"`;
+    // Vercel requires using the /tmp directory for writing files
+    const outputPath = path.join('/tmp', `combined-${Date.now()}.mp4`);
+
+    const cmd = `"${ffmpegPath}" -loop 1 -i "${imageUrl}" -i "${audioUrl}" \
+      -c:v libx264 -tune stillimage -c:a aac -b:a 192k \
+      -pix_fmt yuv420p -shortest "${outputPath}"`;
 
     exec(cmd, (error) => {
       if (error) {
@@ -23,9 +27,16 @@ app.post('/combine', async (req, res) => {
         return res.status(500).json({ error: 'Video creation failed' });
       }
 
-      const video = fs.readFileSync(outputPath);
-res.setHeader('Content-Type', 'video/mp4');
-res.download(outputFile, 'combined-video.mp4');
+      // Stream the video file directly to the response
+      res.setHeader('Content-Disposition', 'attachment; filename="combined-video.mp4"');
+      res.setHeader('Content-Type', 'video/mp4');
+
+      const stream = fs.createReadStream(outputPath);
+      stream.pipe(res);
+
+      stream.on('end', () => {
+        fs.unlinkSync(outputPath); // Cleanup temporary file after sending
+      });
     });
   } catch (err) {
     console.error(err);
@@ -35,3 +46,5 @@ res.download(outputFile, 'combined-video.mp4');
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Combine API running on port ${PORT}`));
+
+module.exports = app; // <-- Required for Vercel
